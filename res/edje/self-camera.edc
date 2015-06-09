@@ -1,0 +1,177 @@
+/*
+ * Copyright (c) 2014 Samsung Electronics Co., Ltd All Rights Reserved
+ *
+ * Licensed under the Apache License, Version 2.0 (the License);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#define IMAGE_PATH ""
+
+#define FONT_NAME "font=SLP:style=Roman"
+
+images
+{
+    image: IMAGE_PATH"timer_2.png" COMP;
+    image: IMAGE_PATH"timer_2_selected.png" COMP;
+    image: IMAGE_PATH"timer_5.png" COMP;
+    image: IMAGE_PATH"timer_5_selected.png" COMP;
+    image: IMAGE_PATH"timer_10.png" COMP;
+    image: IMAGE_PATH"timer_10_selected.png" COMP;
+
+    image: IMAGE_PATH"bar.png" COMP;
+
+    image: IMAGE_PATH"shutter.png" COMP;
+    image: IMAGE_PATH"shutter2.png" COMP;
+
+    image: IMAGE_PATH"none.png" COMP;
+    image: IMAGE_PATH"transparent.png" COMP;
+} //images
+
+collections
+{
+
+    base_scale: 1.8;
+    group
+    {
+        name: "layout";
+        parts
+        {
+            part
+            {
+                name: "elm.swallow.content";
+                type: SWALLOW;
+                description
+                {
+                    rel1 { relative: 0.0 0.0; }
+                    visible: 1;
+                }
+            } //part
+            part
+            {
+                name: "shutter_button";
+                type: IMAGE;
+                description
+                {
+                    fixed: 1 1;
+                    rel1 { relative: 0.25 0.25; }
+                    min: 88 88;
+                    max: 176 176;
+                    visible: 1;
+                    image.normal: IMAGE_PATH"shutter.png";
+                }
+                description {
+                    state: "pressed" 0.0;
+                    inherit: "default" 0.0;
+                    image.normal: IMAGE_PATH"shutter2.png";
+                }
+            } //part
+            part
+            {
+                name: "passcode_1";
+                type: TEXT;
+                entry_mode: PASSWORD;
+                description
+                {
+                    rel1 { relative: 0.50 0.25; }
+                    align: 0.5 0.5;
+                    min: 88 88;
+                    max: 176 176;
+                    visible: 1;
+                    /*image.normal: IMAGE_PATH"shutter.png";*/
+                    text
+                	{
+	                	text: "Passcode1";
+	                	font: "Tizen Sans";
+	                	size: 14;
+                		repch: "*";
+                	}
+                }
+            } //part
+            part
+            {
+                name: "passcode_2";
+                type: TEXT;
+                entry_mode: PASSWORD;
+                description
+                {
+                    rel1 { relative: 0.75 0.25; }
+                    min: 88 88;
+                    max: 176 176;
+                    visible: 1;
+                    /*image.normal: IMAGE_PATH"shutter.png";*/
+                    text
+	                {
+	                	text: "Passcode2";
+	                	font: "Tizen Sans";
+	                	size: 14;
+	                	repch: "*";
+	                }
+                }
+            } //part
+            part
+            {
+                name: "passcode_3";
+                type: TEXT;
+                entry_mode: PASSWORD;
+                description
+                {
+                    rel1 { relative: 1.20 3.00; }
+                    min: 88 88;
+                    max: 176 176;
+                    visible: 1;
+                    /*image.normal: IMAGE_PATH"shutter.png";*/
+                    text
+	                {
+	                	text: "Passcode3";
+	                	font: "Tizen Sans";
+	                	size: 14;
+	                	repch: "*";
+	                }
+                }
+            } //part
+            
+            programs
+            {
+                program {
+                    name: "down_shutter";
+                    signal: "mouse,down,*";
+                    source: "shutter_button";
+                    script {
+                        set_state(PART:"shutter_button", "pressed", 0.0);
+                        emit("shutter_button_down", "shutter_button");
+                    }
+                }
+                program {
+                    name: "up_shutter";
+                    signal: "mouse,up,1";
+                    source: "shutter_button";
+                    script {
+                        set_state(PART:"shutter_button", "default", 0.0);
+                        emit("shutter_button_up", "shutter_button");
+                    }
+                }
+                program
+                {
+                    name: "clicked_shutter";
+                    signal: "mouse,clicked,1";
+                    source: "shutter_button";
+                    script {
+                        set_state(PART:"shutter_button", "default", 0.0);
+                        emit("shutter_button_clicked", "shutter_button");
+                    }
+                } //program
+            } //programs
+
+        } //parts
+    } //group
+    
+} //collections
