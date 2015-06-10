@@ -16,7 +16,6 @@
 
 #include "view/window.h"
 
-
 #include "utils/logger.h"
 
 #include <Elementary.h>
