@@ -47,7 +47,7 @@ collections
         {
             part
             {
-                name: "elm.swallow.content";
+                name: "elm.swallow.content_camera";
                 type: SWALLOW;
                 description
                 {
@@ -65,7 +65,7 @@ collections
                     rel1 { relative: 0.38 0.85; }
                     min: 88 88;
                     max: 176 176;
-                    visible: 1;
+                    visible: 0;
                     image.normal: IMAGE_PATH"shutter.png";
                 }
                 description {
@@ -74,72 +74,17 @@ collections
                     image.normal: IMAGE_PATH"shutter2.png";
                 }
             } //part
-            part
-            {
-                name: "passcode_1";
-                type: TEXT;
-                entry_mode: PASSWORD;
-                description
-                {
-                    rel1 { relative: 0.25 0.25; }
-                    align: 0.5 0.5;
-                    min: 88 88;
-                    max: 176 176;
-                    visible: 1;
-                    /*image.normal: IMAGE_PATH"shutter.png";*/
-                    text
-                	{
-	                	text: "Passcode1";
-	                	font: "Tizen Sans";
-	                	size: 14;
-                		repch: "*";
-                	}
-                }
-            } //part
-            part
-            {
-                name: "passcode_2";
-                type: TEXT;
-                entry_mode: PASSWORD;
-                description
-                {
-                    rel1 { relative: 0.25 0.50; }
-                    min: 88 88;
-                    max: 176 176;
-                    visible: 1;
-                    /*image.normal: IMAGE_PATH"shutter.png";*/
-                    text
-	                {
-	                	text: "Passcode2";
-	                	font: "Tizen Sans";
-	                	size: 14;
-	                	repch: "*";
-	                }
-                }
-            } //part
-            part
-            {
-                name: "passcode_3";
-                type: TEXT;
-                entry_mode: PASSWORD;
-                description
-                {
-                    fixed: 1 1;
-                    rel1 { relative: 0.25 0.75; }
-                    min: 88 88;
-                    max: 176 176;
-                    visible: 1;
-                    /*image.normal: IMAGE_PATH"shutter.png";*/
-                    text
-	                {
-	                	text: "Passcode3";
-	                	font: "Tizen Sans";
-	                	size: 14;
-	                	repch: "*";
-	                }
-                }
-            } //part
             
+            part
+            {
+                name: "elm.swallow.content_lock";
+                type: SWALLOW;
+                description
+                {
+                    rel1 { relative: 0.0 0.0; }
+                    visible: 1;
+                }
+            } //part
             programs
             {
                 program {

@@ -47,6 +47,12 @@ window *window_create()
     Evas_Object *bg = elm_bg_add(win->conform);
     elm_object_part_content_set(win->conform, "elm.swallow.bg", bg);
 
+    /*Evas_Object *obj = elm_button_add(win->conform);
+    elm_object_text_set(obj, "1");
+    evas_object_size_hint_align_set(obj, EVAS_HINT_FILL, EVAS_HINT_FILL);
+    evas_object_size_hint_padding_set(obj,5,5,5,5);
+    evas_object_show(obj);*/
+
     return win;
 }
 

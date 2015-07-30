@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<manifest xmlns="http://tizen.org/ns/packages" api-version="2.3" package="org.tizen.camerasample" version="1.0.0">
-    <profile name="mobile" />
-    <ui-application appid="org.tizen.camerasample" exec="camerasample" type="capp" multiple="false" taskmanage="true" nodisplay="false">
+<manifest xmlns="http://tizen.org/ns/packages" api-version="2.3" package="org.tizen.watchdog" version="1.0.0">
+    <profile name="mobile"/>
+    <ui-application appid="org.tizen.watchdog" exec="watchdog" multiple="false" nodisplay="false" taskmanage="true" type="capp">
+        <label>WatchDog</label>
         <icon>camerasample.png</icon>
-        <label>camerasample</label>
     </ui-application>
     <privileges>
         <privilege>http://tizen.org/privilege/mediastorage</privilege>
         <privilege>http://tizen.org/privilege/camera</privilege>
         <privilege>http://tizen.org/privilege/appmanager.launch</privilege>
+        <privilege>http://tizen.org/privilege/email</privilege>
     </privileges>
 </manifest>
