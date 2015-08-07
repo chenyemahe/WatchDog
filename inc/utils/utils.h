@@ -30,4 +30,3 @@ void substr(char [], char[], int, int);
 void email_error_code_checking(int error_code);
 
 #endif /* __UTILS_H__ */
-

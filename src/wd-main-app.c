@@ -114,6 +114,9 @@ static bool _app_create_cb(void *user_data)
     }
 
     Evas_Object *view = main_view_add(app->navi);
+
+
+
     if(!view)
     {
         ERR("sensor_list_view_create() failed");

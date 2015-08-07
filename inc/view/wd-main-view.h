@@ -28,14 +28,4 @@
  */
 Evas_Object *main_view_add(Evas_Object *navi);
 
-/* holds user entered passcode */
-typedef struct
-{
-	char user_passcode[4];
-	char secret_passcode[4];
-	int pass_code_retry_count;
-} pass_code;
-
-pass_code *passc;
-
 #endif /* __MAIN_VIEW_H__ */

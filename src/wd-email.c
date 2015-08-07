@@ -1,9 +1,12 @@
 #include "wd-email.h"
 #include "utils/logger.h"
 #include "utils/utils.h"
+#include <app_preference.h>
 
 void _main_view_send_email(char filePath[]){
 	email_h msg;
+	const char *string_key = "Email";
+	char *email;
 	int error_code = EMAILS_ERROR_NONE;
 	error_code = email_create_message(&msg);
 	if (error_code != EMAILS_ERROR_NONE)
@@ -12,22 +15,13 @@ void _main_view_send_email(char filePath[]){
 	}
 	email_error_code_checking(error_code);
 
-	error_code = email_add_recipient(msg, EMAIL_RECIPIENT_TYPE_TO, "chenyemh2@gmail.com");
+	preference_get_string(string_key, &email);
+    dlog_print(DLOG_INFO, LOG_TAG, "Email: %s\n",email);
+	error_code = email_add_recipient(msg, EMAIL_RECIPIENT_TYPE_TO, email);
+	free(email);
 	if (error_code != EMAILS_ERROR_NONE)
 	{
 	   dlog_print(DLOG_INFO, LOG_TAG, "Failed to add recipient\n");
-	}
-
-	error_code = email_set_subject(msg, WARNING_EMAIL_SUBJECT);
-	if (error_code != EMAILS_ERROR_NONE)
-	{
-	   dlog_print(DLOG_INFO, LOG_TAG, "Failed to add subject\n");
-	}
-
-	error_code = email_set_body(msg, WARNING_EMAIL_BODY);
-	if (error_code != EMAILS_ERROR_NONE)
-	{
-	   dlog_print(DLOG_INFO, LOG_TAG, "Failed to add body\n");
 	}
 
 	error_code = email_add_attach(msg, filePath);

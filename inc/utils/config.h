@@ -20,6 +20,7 @@
 #include <app.h>
 #include <linux/limits.h>
 
+
 #define SELF_CAMERA_LAYOUT  "edje/self-camera.edj"
 #define SOUND_COUNT         "sounds/sounds_count.mp3"
 
