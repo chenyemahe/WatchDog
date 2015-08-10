@@ -16,6 +16,7 @@
 
 #include "view/wd-main-view.h"
 #include "view/window.h"
+#include "view/wd_main_view_key_handler.h"
 #include "wd-email.h"
 
 #include "utils/config.h"
@@ -76,15 +77,6 @@ typedef struct {
 	int w, h;
 
 } widget_pos;
-
-/* holds user entered passcode */
-typedef struct {
-	char user_passcode[5];
-	char secret_passcode[5];
-	int pass_code_retry_count;
-} pass_code;
-
-pass_code *passc;
 
 /* Widget creation parameters. Order must be the same as in other arrays. */
 static const widget_params WIDGET_PARAMS[] = { { CALC_KEY_ERASE,
@@ -216,9 +208,7 @@ static void _main_view_popup_close_cb(void *data, Evas_Object *obj,
 static result_type _main_view_make_lock_layout(main_view *data,
 		Evas_Object *parent);
 
-static result_type _register_layout(main_view *data,
-		Evas_Object *parent);
-
+static result_type _register_layout(main_view *data, Evas_Object *parent);
 
 /* Makes widgets on the layout. Widget is not packed to a grid yet */
 static result_type _main_view_make_lock_widgets(main_view *data);
@@ -231,52 +221,47 @@ static void _main_view_update_disp_label(main_view *data);
 static void _main_view_handle_key_press(main_view *view, key_type key);
 /* Repacks previously created widgets to the grid according to the current orientation */
 static void _main_view_repack_widgets(main_view *data);
-/*sets the default secret code*/
-static void _main_view_set_seceret_code();
-static Eina_Bool _main_view_is_user_code_entered();
-static void _main_view_set_user_code(char num);
-static void _main_view_reset_user_code();
 static void btn_clicked_cb(main_view *data, Evas_Object *obj, void *event_info);
 
- void _create_popup(Evas_Object *parent, char* text);
+void _create_popup(Evas_Object *parent, char* text);
 
- const char *string_key = "Email";
- const char *string_value;
- char *string_output;
- bool existing;
+const char *string_key = "Email";
+const char *string_value;
+char *string_output;
+bool existing;
 
-void _notification() {
- 	notification_h notification = NULL;
- 	notification = notification_create(NOTIFICATION_TYPE_NOTI);
- 	if (notification != NULL) {
- 		notification_set_text(notification, NOTIFICATION_TEXT_TYPE_TITLE,
- 				"Someone tried to unlock your phone", NULL,
- 				NOTIFICATION_VARIABLE_TYPE_NONE);
- 		notification_post(notification);
- 	}
- }
+void _notification(char* text) {
+	notification_h notification = NULL;
+	notification = notification_create(NOTIFICATION_TYPE_NOTI);
+	if (notification != NULL) {
+		notification_set_text(notification, NOTIFICATION_TEXT_TYPE_TITLE, text,
+				NULL, NOTIFICATION_VARIABLE_TYPE_NONE);
+		notification_post(notification);
+	}
+}
 
- /*preference_is_existing(string_key, &existing);
+/*preference_is_existing(string_key, &existing);
 
  preference_get_string(string_key, &string_output);
 
  free(string_output);
-*/
+ */
 Evas_Object *main_view_add(Evas_Object *navi) {
 	main_view *view = calloc(1, sizeof(main_view));
 
 	passc = calloc(1, sizeof(pass_code));
 	_main_view_set_seceret_code();
+	_main_view_set_recall_code();
 
 	RETVM_IF(!view, NULL, "calloc() failed");
 	view->navi = navi;
 
-
 	view->layout = ui_utils_layout_add(view->navi, _main_view_destroy, view);
 
 	Elm_Object_Item *navi_item;
-    navi_item= elm_naviframe_item_push(view->navi, "WatchDog Registration", NULL, NULL, view->layout, NULL);
-    elm_naviframe_item_title_enabled_set(navi_item,EINA_TRUE,EINA_TRUE);
+	navi_item = elm_naviframe_item_push(view->navi, "WatchDog Registration",
+			NULL, NULL, view->layout, NULL);
+	elm_naviframe_item_title_enabled_set(navi_item, EINA_TRUE, EINA_TRUE);
 
 	if (!view->layout) {
 		ERR("ui_utils_layout_add() failed");
@@ -312,22 +297,19 @@ Evas_Object *main_view_add(Evas_Object *navi) {
 
 	_main_view_register_cbs(view);
 
-
 //Registration Page or Main Page
-	dlog_print(DLOG_INFO, LOG_TAG, "Existing: %s\n",existing);
-    preference_is_existing(string_key, &existing);
+	dlog_print(DLOG_INFO, LOG_TAG, "Existing: %s\n", existing);
+	preference_is_existing(string_key, &existing);
 
-	if(existing){
-	result = _main_view_make_lock_layout(view, view->navi);
-	dlog_print(DLOG_INFO, LOG_TAG, "Inside Main view");
+	if (existing) {
+		result = _main_view_make_lock_layout(view, view->navi);
+		dlog_print(DLOG_INFO, LOG_TAG, "Inside Main view");
+	} else {
+		result = _register_layout(view, view->navi);
+		dlog_print(DLOG_INFO, LOG_TAG, "Inside Register View");
 	}
-	else{
-	result= _register_layout(view, view->navi);
-	dlog_print(DLOG_INFO, LOG_TAG, "Inside Register View");
-	}
 
-
-  if (RES_OK != result)
+	if (RES_OK != result)
 		return NULL;
 	result = _main_view_make_lock_widgets(view);
 	if (RES_OK != result)
@@ -335,15 +317,13 @@ Evas_Object *main_view_add(Evas_Object *navi) {
 
 	_main_view_repack_widgets(view);
 
-	view->navi_item = elm_naviframe_item_push(view->navi, "WatchDog", NULL, NULL,
-			view->layout, NULL);
+	view->navi_item = elm_naviframe_item_push(view->navi, "WatchDog", NULL,
+			NULL, view->layout, NULL);
 	elm_naviframe_item_title_enabled_set(view->navi_item, EINA_TRUE,
-			EINA_TRUE);
+	EINA_TRUE);
 
 	return view->layout;
 }
-
-
 
 static void _main_view_destroy(void *data, Evas *e, Evas_Object *obj,
 		void *event_info) {
@@ -671,7 +651,6 @@ static void _main_view_gallery_button_cb(void *data, Evas_Object *obj,
 	app_control_destroy(app_control);
 }
 
-
 static void _main_view_timer_2_cb(void *data, Evas_Object *obj,
 		const char *emission, const char *source) {
 	RETM_IF(!data, "data is NULL");
@@ -750,7 +729,7 @@ result_type _main_view_make_lock_layout(main_view *data, Evas_Object *parent) {
 	data->layout = layout;
 	elm_table_homogeneous_set(layout, EINA_TRUE);
 	evas_object_size_hint_weight_set(layout, EVAS_HINT_EXPAND,
-			EVAS_HINT_EXPAND);
+	EVAS_HINT_EXPAND);
 	evas_object_event_callback_add(layout, EVAS_CALLBACK_FREE,
 			_main_view_layout_free_cb, data);
 	evas_object_show(layout);
@@ -761,8 +740,6 @@ result_type _main_view_make_lock_layout(main_view *data, Evas_Object *parent) {
 	evas_object_show(title);
 	elm_table_pack(layout, title, 0, 0, 1, 2);
 	evas_object_show(layout);
-
-
 
 	/* Create grid for holding and aligning the widgets */
 	Evas_Object *grid = elm_grid_add(layout);
@@ -784,8 +761,12 @@ result_type _main_view_make_lock_layout(main_view *data, Evas_Object *parent) {
 
 Evas_Object *typed;
 
-result_type _register_layout(main_view *data, Evas_Object *parent) {
+static bool isEmail(char* inputEmail) {
 
+	return (true);
+}
+
+result_type _register_layout(main_view *data, Evas_Object *parent) {
 
 	/* Create single cell table so the internal grid will support padding */
 	Evas_Object *layout = elm_table_add(parent);
@@ -793,14 +774,10 @@ result_type _register_layout(main_view *data, Evas_Object *parent) {
 
 	data->layout = layout;
 	elm_table_homogeneous_set(layout, EINA_TRUE);
-	evas_object_size_hint_align_set(layout, EVAS_HINT_FILL, EVAS_HINT_EXPAND);
 	evas_object_event_callback_add(layout, EVAS_CALLBACK_FREE,
 			_main_view_layout_free_cb, data);
-	evas_object_size_hint_align_set(layout, -1.0, -1.0);
-	evas_object_size_hint_weight_set(layout, 1, 1);
 	elm_table_padding_set(layout, 30, 30);
 	evas_object_show(layout);
-
 
 	Evas_Object *title = elm_label_add(layout);
 	elm_object_text_set(title, "Register with Email Address");
@@ -811,21 +788,22 @@ result_type _register_layout(main_view *data, Evas_Object *parent) {
 	Evas_Object *email = elm_entry_add(layout);
 	elm_entry_cursor_begin_set(email);
 	elm_entry_editable_set(email, EINA_TRUE);
-	elm_object_part_content_set(layout, "entry_part", email);
+	elm_entry_input_panel_enabled_set(email, EINA_TRUE);
+	elm_entry_input_panel_show(email);
 	elm_entry_line_wrap_set(email, ELM_WRAP_WORD);
 	elm_entry_single_line_set(email, EINA_TRUE);
+	elm_object_part_content_set(layout, "entry_part", email);
 	evas_object_show(email);
 	elm_table_pack(layout, email, 0, 1, 1, 10);
-	typed= email;
+	typed = email;
 	evas_object_show(layout);
 
-
-
 	Evas_Object *regis = elm_button_add(layout);
-	elm_object_style_set(regis,"default");
-	elm_object_part_text_set(regis, NULL,"Register Email!");
+	elm_object_style_set(regis, "default");
+	elm_object_part_text_set(regis, NULL, "Register Email!");
 	evas_object_size_hint_align_set(regis, EVAS_HINT_FILL, EVAS_HINT_EXPAND);
 	evas_object_show(regis);
+	elm_entry_input_panel_layout_set(regis, ELM_INPUT_PANEL_LAYOUT_EMAIL);
 	evas_object_smart_callback_add(regis, "clicked", btn_clicked_cb, NULL);
 	elm_box_pack_end(layout, regis);
 	elm_table_pack(layout, regis, 0, 2, 1, 10);
@@ -837,14 +815,19 @@ result_type _register_layout(main_view *data, Evas_Object *parent) {
 	return RES_OK;
 }
 
- void btn_clicked_cb(main_view *data, Evas_Object *obj, void *event_info)
-{
-	 dlog_print(DLOG_INFO, LOG_TAG, "Email registered by user: %s\n",elm_entry_entry_get(typed));
-	 preference_set_string(string_key,elm_entry_entry_get(typed));
-	 main_view_add(data->navi);
-	/* preference_get_string(string_key, &string_output);
-     dlog_print(DLOG_INFO, LOG_TAG, "Email: %s\n",string_output);
-	 		free(string_output);*/
+void btn_clicked_cb(main_view *data, Evas_Object *obj, void *event_info) {
+	if (isEmail(elm_entry_entry_get(typed))) {
+		dlog_print(DLOG_INFO, LOG_TAG, "Email registered by user: %s\n",
+				elm_entry_entry_get(typed));
+		preference_set_string(string_key, elm_entry_entry_get(typed));
+		_main_view_make_lock_layout(data, data->navi);
+	}
+
+	else {
+		elm_object_part_text_set(typed, NULL, NULL);
+		_notification("Invalid Email format. Retry ");
+
+	}
 }
 
 result_type _main_view_make_lock_widgets(main_view *data) {
@@ -928,7 +911,7 @@ void _create_popup(Evas_Object *parent, char* text) {
 	popup = elm_popup_add(parent);
 	elm_object_style_set(popup, "toast");
 	elm_object_text_set(popup, text);
-	elm_popup_orient_set(popup,ELM_POPUP_ORIENT_BOTTOM);
+	elm_popup_orient_set(popup, ELM_POPUP_ORIENT_BOTTOM);
 	elm_popup_timeout_set(popup, 2.0);
 	evas_object_show(popup);
 }
@@ -972,23 +955,27 @@ void _main_view_handle_key_press(main_view *view, key_type key) {
 	}
 	free(num);
 
+	if (strcmp(passc->secret_passcode, passc->recall_passcode) == 0) {
+		_register_layout(view, view->navi);
+		return;
+	}
 	if (_main_view_is_user_code_entered()) {
 
 		if (strcmp(passc->secret_passcode, passc->user_passcode) == 0) {
 			_main_view_reset_user_code();
 			passc->pass_code_retry_count = 0;
-			_create_popup(view->navi,"Device  Unlock Successful");
+			_create_popup(view->navi, "Device  Unlock Successful");
 
 		} else {
 			if (passc->pass_code_retry_count == 3) {
-				_create_popup(view->navi,"3 Failed Attempts");
-				_notification();
+				_create_popup(view->navi, "3 Failed Attempts");
+				_notification("Someone tried to unlock your phone");
 				_main_view_start_timer(view);
 				passc->pass_code_retry_count = 0;
 			} else {
 				passc->pass_code_retry_count++;
 				_main_view_reset_user_code();
-				_create_popup(view->navi,"Failed Attempt!");
+				_create_popup(view->navi, "Failed Attempt!");
 			}
 		}
 	}
@@ -1012,42 +999,4 @@ void _main_view_repack_widgets(main_view *data) {
 		elm_grid_pack(data->grid, data->widgets[i], pos_array[i].x,
 				pos_array[i].y, pos_array[i].w, pos_array[i].h);
 	}
-}
-
-static void _main_view_set_seceret_code() {
-	passc->secret_passcode[0] = '0';
-	passc->secret_passcode[1] = '0';
-	passc->secret_passcode[2] = '0';
-	passc->secret_passcode[3] = '0';
-}
-
-static void _main_view_reset_user_code() {
-	passc->user_passcode[0] = '\0';
-	passc->user_passcode[1] = '\0';
-	passc->user_passcode[2] = '\0';
-	passc->user_passcode[3] = '\0';
-}
-
-static void _main_view_set_user_code(char num) {
-
-
-	int i = 0;
-	for (i = 0; i < 4; i++) {
-		if (passc->user_passcode[i] == '\0') {
-			passc->user_passcode[i] = num;
-			break;
-		}
-	}
-
-}
-
-static Eina_Bool _main_view_is_user_code_entered() {
-	int i = 0;
-	for (i = 0; i < 4; i++) {
-
-		if (passc->user_passcode[i] == '\0')
-			return 0;
-	}
-
-	return 1;
 }

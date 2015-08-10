@@ -21,15 +21,15 @@
 
 #include "view/wd-main-view.h"
 #include "view/window.h"
+#include "wd-email.h"
 
 #include <app.h>
 #include <efl_extension.h>
 #include <Elementary.h>
 
-struct _app_data
-{
-    window *win;
-    Evas_Object *navi;
+struct _app_data {
+	window *win;
+	Evas_Object *navi;
 };
 
 static Evas_Object *_app_navi_add(app_data *app);
@@ -39,116 +39,109 @@ static void _app_navi_back_cb(void *data, Evas_Object *obj, void *event_info);
 static void _app_resume_cb(void *user_data);
 static void _app_pause_cb(void *user_data);
 
-app_data *app_create()
-{
-    return calloc(1, sizeof(app_data));
+static const char *WARNING_EMAIL_NOTSET =
+		"Watch dog needs set your email address first. Please set your email address in Email application First!";
+
+app_data *app_create() {
+	return calloc(1, sizeof(app_data));
 }
 
-void app_destroy(app_data *app)
-{
-    free(app);
+void app_destroy(app_data *app) {
+	free(app);
 }
 
-int app_run(app_data *app, int argc, char **argv)
-{
-    RETVM_IF(!app, -1, "app is NULL");
-    ui_app_lifecycle_callback_s cbs =
-    {
-        .create = _app_create_cb,
-        .terminate = _app_terminate_cb,
-        .pause = _app_pause_cb,
-        .resume = _app_resume_cb,
-        .app_control = NULL
-    };
+int app_run(app_data *app, int argc, char **argv) {
+	RETVM_IF(!app, -1, "app is NULL");
+	ui_app_lifecycle_callback_s cbs = { .create = _app_create_cb, .terminate =
+			_app_terminate_cb, .pause = _app_pause_cb, .resume = _app_resume_cb,
+			.app_control = NULL };
 
-    return ui_app_main(argc, argv, &cbs, app);
+	return ui_app_main(argc, argv, &cbs, app);
 }
 
-static Evas_Object *_app_navi_add(app_data *app)
-{
-    RETVM_IF(!app, NULL, "app is NULL");
-    Evas_Object *navi = ui_utils_navi_add(window_layout_get(app->win));
-    eext_object_event_callback_add(navi, EEXT_CALLBACK_BACK, _app_navi_back_cb, app);
-    window_content_set(app->win, navi);
-    return navi;
+static Evas_Object *_app_navi_add(app_data *app) {
+	RETVM_IF(!app, NULL, "app is NULL");
+	Evas_Object *navi = ui_utils_navi_add(window_layout_get(app->win));
+	eext_object_event_callback_add(navi, EEXT_CALLBACK_BACK, _app_navi_back_cb,
+			app);
+	window_content_set(app->win, navi);
+	return navi;
 }
 
-static void _app_resume_cb(void *user_data)
-{
-    RETM_IF(!user_data, "user_data is null");
-    app_data *app = user_data;
-    Elm_Object_Item *top = elm_naviframe_top_item_get(app->navi);
-    Evas_Object *layout = elm_object_item_part_content_get(top, "elm.swallow.content");
-    if(layout)
-    {
-        evas_object_smart_callback_call(layout, EVENT_RESUME, NULL);
-    }
+static void _app_resume_cb(void *user_data) {
+	RETM_IF(!user_data, "user_data is null");
+	app_data *app = user_data;
+
+	if (_is_email_preset()) {
+		Evas_Object *view = main_view_add(app->navi);
+
+		if (!view) {
+			ERR("sensor_list_view_create() failed");
+		}
+	} else {
+		Evas_Object *popup;
+		popup = elm_popup_add(app->navi);
+		elm_object_style_set(popup, "dialog");
+		elm_object_text_set(popup, WARNING_EMAIL_NOTSET);
+		elm_popup_orient_set(popup, ELM_POPUP_ORIENT_CENTER);
+		elm_popup_timeout_set(popup, 15.0);
+		evas_object_show(popup);
+	}
+
+	Elm_Object_Item *top = elm_naviframe_top_item_get(app->navi);
+	Evas_Object *layout = elm_object_item_part_content_get(top,
+			"elm.swallow.content");
+	if (layout) {
+		evas_object_smart_callback_call(layout, EVENT_RESUME, NULL);
+	}
 }
 
-static void _app_pause_cb(void *user_data)
-{
-    RETM_IF(!user_data, "user_data is null");
-    app_data *app = user_data;
-    Elm_Object_Item *top = elm_naviframe_top_item_get(app->navi);
-    Evas_Object *layout = elm_object_item_part_content_get(top, "elm.swallow.content");
-    if(layout)
-    {
-        evas_object_smart_callback_call(layout, EVENT_PAUSE, NULL);
-    }
+static void _app_pause_cb(void *user_data) {
+	RETM_IF(!user_data, "user_data is null");
+	app_data *app = user_data;
+	Elm_Object_Item *top = elm_naviframe_top_item_get(app->navi);
+	Evas_Object *layout = elm_object_item_part_content_get(top,
+			"elm.swallow.content");
+	if (layout) {
+		evas_object_smart_callback_call(layout, EVENT_PAUSE, NULL);
+	}
 }
 
-static bool _app_create_cb(void *user_data)
-{
-    RETVM_IF(!user_data, false, "user_data is NULL");
-    app_data *app = user_data;
+static bool _app_create_cb(void *user_data) {
+	RETVM_IF(!user_data, false, "user_data is NULL");
+	app_data *app = user_data;
 
-    app->win = window_create();
-    RETVM_IF(!app->win, false, "window_create() failed");
+	app->win = window_create();
+	RETVM_IF(!app->win, false, "window_create() failed");
 
-    app->navi = _app_navi_add(app);
-    if(!app->navi)
-    {
-        ERR("_app_navi_add() failed");
-        window_destroy(app->win);
-        return false;
-    }
+	app->navi = _app_navi_add(app);
+	if (!app->navi) {
+		ERR("_app_navi_add() failed");
+		window_destroy(app->win);
+		return false;
+	}
 
-    Evas_Object *view = main_view_add(app->navi);
-
-
-
-    if(!view)
-    {
-        ERR("sensor_list_view_create() failed");
-    }
-
-    return true;
+	return true;
 }
 
-static void _app_terminate_cb(void *user_data)
-{
-    RETM_IF(!user_data, "user_data is NULL");
-    app_data *app = user_data;
+static void _app_terminate_cb(void *user_data) {
+	RETM_IF(!user_data, "user_data is NULL");
+	app_data *app = user_data;
 
-    if(app->win)
-    {
-        window_destroy(app->win);
-    }
+	if (app->win) {
+		window_destroy(app->win);
+	}
 }
 
-static void _app_navi_back_cb(void *data, Evas_Object *obj, void *event_info)
-{
-    RETM_IF(!data, "data is NULL");
-    app_data *app = data;
+static void _app_navi_back_cb(void *data, Evas_Object *obj, void *event_info) {
+	RETM_IF(!data, "data is NULL");
+	app_data *app = data;
 
-    Elm_Object_Item *top = elm_naviframe_top_item_get(app->navi);
+	Elm_Object_Item *top = elm_naviframe_top_item_get(app->navi);
 
-    if(top == elm_naviframe_bottom_item_get(app->navi))
-    {
-        window_lower(app->win);
-    }
-    else
-    {
-        elm_naviframe_item_pop(app->navi);
-    }
+	if (top == elm_naviframe_bottom_item_get(app->navi)) {
+		window_lower(app->win);
+	} else {
+		elm_naviframe_item_pop(app->navi);
+	}
 }
